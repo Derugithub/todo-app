@@ -86,7 +86,7 @@ export default function App() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>
-          <Text style={styles.kicker}>NOIR LIST</Text>
+          <Text style={styles.kicker}>NOIRLIST</Text>
           <Text style={styles.title}>Do the work.</Text>
           <Text style={styles.subtitle}>
             {remaining === 0
