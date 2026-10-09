@@ -19,7 +19,7 @@ import { colors, radius, spacing } from './src/theme';
 import type { Filter, Todo } from './src/types';
 
 const COMPOSER_HEIGHT = 46;
-// Space below the safe-area inset, above the NOIR LIST kicker.
+// Space below the safe-area inset, above the NOIRLIST kicker.
 const HEADER_TOP_GAP = 12;
 
 function TodoScreen() {
@@ -122,7 +122,7 @@ function TodoScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>
-          <Text style={styles.kicker}>NOIR LIST</Text>
+          <Text style={styles.kicker}>NOIRLIST</Text>
           <Text style={styles.title}>Do the work.</Text>
           <Text style={styles.subtitle}>
             {remaining === 0

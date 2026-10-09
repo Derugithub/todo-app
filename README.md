@@ -1,8 +1,8 @@
-# Noir List
+# NoirList
 
 ## Overview
 
-Noir List is a single-screen task list. `app.json` names the app Noir List, slug `todo-app`, version `1.0.0`. It is an Expo app. `package.json` depends on `expo` `~57.0.22`; `package-lock.json` resolves `expo` `57.0.27`. The interface is portrait and dark (`userInterfaceStyle` is `dark`). iOS `supportsTablet` is true. The Android package is `com.deredo.todoapp`. `npm run web` starts the Expo web target.
+NoirList is a single-screen task list. `app.json` names the app NoirList, slug `todo-app`, version `1.0.0`. It is an Expo app. `package.json` depends on `expo` `~57.0.22`; `package-lock.json` resolves `expo` `57.0.27`. The interface is portrait and dark (`userInterfaceStyle` is `dark`). iOS `supportsTablet` is true. The Android package is `com.deredo.todoapp`. `npm run web` starts the Expo web target.
 
 Tasks live in React state in `App.tsx` and are saved on device with AsyncStorage (`@react-native-async-storage/async-storage` `2.2.0`, key `noir-list.todos.v1`). The screen opens with two seed tasks on first launch, or when the saved value is missing or unreadable. A saved empty list stays empty. Order and done state survive a restart. The source has no database server and no network client.
 
@@ -20,12 +20,12 @@ Tasks live in React state in `App.tsx` and are saved on device with AsyncStorage
 - Seed tasks are “Sketch the crimson layout” (done, id `1`) and “Ship the first todo” (open, id `2`).
 - The list is written after each change. Killing and reopening the app restores that list. Invalid saved entries are dropped. A non-empty save with nothing usable falls back to the seed tasks.
 - `Todo.createdAt` is stored on each task and is not shown in the UI.
-- Colors, spacing, and radius come from `src/theme.ts`. The screen background is `#070708`. The accent is `#E11D48`. The status bar is light. `SafeAreaView` from `react-native-safe-area-context` keeps the header below the safe-area inset, then adds 12dp above the “NOIR LIST” kicker. On iOS, `KeyboardAvoidingView` uses `padding` so the composer stays above the keyboard.
+- Colors, spacing, and radius come from `src/theme.ts`. The screen background is `#070708`. The accent is `#E11D48`. The status bar is light. `SafeAreaView` from `react-native-safe-area-context` keeps the header below the safe-area inset, then adds 12dp above the “NOIRLIST” kicker. On iOS, `KeyboardAvoidingView` uses `padding` so the composer stays above the keyboard.
 
 ## Requirements
 
 - npm. This repository includes `package-lock.json` (lockfile version 3).
-- Expo SDK 57. `package.json` depends on `expo` `~57.0.22` and `expo-status-bar` `~57.0.1`. The lockfile resolves `expo` `57.0.27` and `expo-status-bar` `57.0.1`.
+- Expo SDK 57. `package.json` depends on `expo` `~57.0.22`, `expo-status-bar` `~57.0.1`, and `expo-splash-screen` `~57.0.9`. The lockfile resolves `expo` `57.0.27`, `expo-status-bar` `57.0.1`, and `expo-splash-screen` `57.0.9`.
 - React `19.2.3`, React Native `0.86.3`, and `react-native-web` `^0.21.2`, as declared in `package.json`. The lockfile resolves `react-native-web` `0.21.2`.
 - `@react-native-async-storage/async-storage` `2.2.0` and `react-native-safe-area-context` `~5.7.0`, the versions Expo SDK 57 pins.
 - TypeScript `~6.0.3` and `@types/react` `~19.2.2`. The lockfile resolves `typescript` `6.0.3` and `@types/react` `19.2.18`.
@@ -58,14 +58,14 @@ No source file reads environment variables. `.gitignore` ignores `.env*.local`. 
 
 Settings in `app.json`:
 
-- Name `Noir List`, slug `todo-app`, version `1.0.0`.
+- Name `NoirList`, slug `todo-app`, version `1.0.0`.
 - Orientation `portrait`. `userInterfaceStyle` `dark`.
 - Icon `./assets/icon.png`. Web favicon `./assets/favicon.png`.
 - iOS `supportsTablet` is true. [TODO: an iOS bundle identifier is not set.]
 - Android package `com.deredo.todoapp`. `predictiveBackGestureEnabled` is false.
-- Android adaptive icon foreground `./assets/android-icon-foreground.png`, background image `./assets/android-icon-background.png`, monochrome image `./assets/android-icon-monochrome.png`, and `backgroundColor` `#070708`. The background image is a solid `#070708`, the same value as `colors.bg` in `src/theme.ts`.
+- Android adaptive icon foreground `./assets/android-icon-foreground.png`, background image `./assets/android-icon-background.png`, monochrome image `./assets/android-icon-monochrome.png`, and `backgroundColor` `#FFFFFF`.
 - `extra.eas.projectId` is `7d992577-6e53-40bf-b5bc-e329989817d8`.
-- No plugins, URL scheme, or splash screen are set.
+- Plugin `expo-splash-screen` uses `./assets/splash-icon.png`, `backgroundColor` `#FFFFFF`, and `imageWidth` `200`. No URL scheme is set. There is no dark splash block.
 
 `eas.json` sets `cli.version` to `>= 24.3.0` and `appVersionSource` to `remote`.
 
@@ -114,7 +114,7 @@ index.ts                      registers App with Expo
 App.tsx                       list, composer, filters, progress
 LICENSE                       MIT license
 README.md
-assets/                       app, adaptive, and web icons
+assets/                       app, adaptive, splash, and web icons
 src/components/FilterBar.tsx  All / Open / Done
 src/components/TodoItem.tsx   one task row
 src/theme.ts                  colors, spacing, radius
@@ -129,11 +129,12 @@ src/types.ts                  Todo and Filter
 
 | Path | Use |
 | --- | --- |
-| `assets/icon.png` | App icon (447×447) |
-| `assets/favicon.png` | Web favicon (200×200) |
-| `assets/android-icon-foreground.png` | Android adaptive foreground (512×512) |
-| `assets/android-icon-background.png` | Android adaptive background, solid `#070708` (512×512) |
-| `assets/android-icon-monochrome.png` | Android themed icon (432×432) |
+| `assets/icon.png` | App icon (1024×1024 RGB) |
+| `assets/favicon.png` | Web favicon (48×48 RGB) |
+| `assets/splash-icon.png` | Splash image (512×512 RGBA) |
+| `assets/android-icon-foreground.png` | Android adaptive foreground (512×512 RGBA) |
+| `assets/android-icon-background.png` | Android adaptive background (512×512 RGB) |
+| `assets/android-icon-monochrome.png` | Android themed icon (432×432 RGBA) |
 
 ## Development
 
