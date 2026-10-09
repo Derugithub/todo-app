@@ -4,7 +4,7 @@
 
 Noir List is a single-screen task list. `app.json` names the app Noir List, slug `todo-app`, version `1.0.0`. It is an Expo app. `package.json` depends on `expo` `~57.0.22`; `package-lock.json` resolves `expo` `57.0.27`. The interface is portrait and dark (`userInterfaceStyle` is `dark`). iOS `supportsTablet` is true. The Android package is `com.deredo.todoapp`. `npm run web` starts the Expo web target.
 
-Tasks live in React state in `App.tsx`. The screen opens with two seed tasks. The source has no database, no AsyncStorage, and no network client. Reloading the app restores the seed list.
+Tasks live in React state in `App.tsx` and are saved on device with AsyncStorage (`@react-native-async-storage/async-storage` `2.2.0`, key `noir-list.todos.v1`). The screen opens with two seed tasks on first launch, or when the saved value is missing or unreadable. A saved empty list stays empty. Order and done state survive a restart. The source has no database server and no network client.
 
 ## Features
 
@@ -18,14 +18,16 @@ Tasks live in React state in `App.tsx`. The screen opens with two seed tasks. Th
 - “Clear done” appears when at least one task is finished. On web it removes finished tasks immediately. On iOS and Android it shows “Clear finished?” with Cancel and Clear.
 - When the visible list is empty, the title is “Empty lane”. The copy is “Start with a single, sharp task.” on All, “No open tasks. Add one above.” on Open, and “No finished tasks yet.” on Done.
 - Seed tasks are “Sketch the crimson layout” (done, id `1`) and “Ship the first todo” (open, id `2`).
+- The list is written after each change. Killing and reopening the app restores that list. Invalid saved entries are dropped. A non-empty save with nothing usable falls back to the seed tasks.
 - `Todo.createdAt` is stored on each task and is not shown in the UI.
-- Colors, spacing, and radius come from `src/theme.ts`. The screen background is `#070708`. The accent is `#E11D48`. The status bar is light. On iOS, `KeyboardAvoidingView` uses `padding` so the composer stays above the keyboard.
+- Colors, spacing, and radius come from `src/theme.ts`. The screen background is `#070708`. The accent is `#E11D48`. The status bar is light. `SafeAreaView` from `react-native-safe-area-context` keeps the header below the safe-area inset, then adds 12dp above the “NOIR LIST” kicker. On iOS, `KeyboardAvoidingView` uses `padding` so the composer stays above the keyboard.
 
 ## Requirements
 
 - npm. This repository includes `package-lock.json` (lockfile version 3).
 - Expo SDK 57. `package.json` depends on `expo` `~57.0.22` and `expo-status-bar` `~57.0.1`. The lockfile resolves `expo` `57.0.27` and `expo-status-bar` `57.0.1`.
 - React `19.2.3`, React Native `0.86.3`, and `react-native-web` `^0.21.2`, as declared in `package.json`. The lockfile resolves `react-native-web` `0.21.2`.
+- `@react-native-async-storage/async-storage` `2.2.0` and `react-native-safe-area-context` `~5.7.0`, the versions Expo SDK 57 pins.
 - TypeScript `~6.0.3` and `@types/react` `~19.2.2`. The lockfile resolves `typescript` `6.0.3` and `@types/react` `19.2.18`.
 
 [TODO: minimum Node.js version]. `package.json` does not set `engines`. `.github/workflows/build.yml` uses Node.js `24.x`.
@@ -98,7 +100,7 @@ Open the result with `npm run ios`, `npm run android`, or `npm run web`.
 4. Use All, Open, or Done to filter the list.
 5. Press “Clear done” to remove finished tasks. On iOS and Android, confirm Clear. On web, finished tasks are removed without a dialog.
 
-The list is kept in memory for the session. Reloading the app returns the two seed tasks.
+The list is stored on the device. Killing and reopening the app restores the saved tasks, including done state and order. The two seed tasks appear on first launch, or when the saved value is missing or unreadable.
 
 ## Project structure
 
@@ -116,6 +118,8 @@ assets/                       app, adaptive, and web icons
 src/components/FilterBar.tsx  All / Open / Done
 src/components/TodoItem.tsx   one task row
 src/theme.ts                  colors, spacing, radius
+src/todos.ts                  seed list and saved-list parsing
+src/todoStorage.ts            AsyncStorage load and save
 src/types.ts                  Todo and Filter
 .github/workflows/build.yml   manual Android EAS build
 .gitignore
