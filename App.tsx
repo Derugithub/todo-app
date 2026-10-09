@@ -6,41 +6,67 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { FilterBar } from './src/components/FilterBar';
 import { TodoItem } from './src/components/TodoItem';
+import { loadTodos, saveTodos } from './src/todoStorage';
 import { colors, radius, spacing } from './src/theme';
 import type { Filter, Todo } from './src/types';
 
-const SEED: Todo[] = [
-  { id: '1', text: 'Sketch the crimson layout', done: true, createdAt: 1 },
-  { id: '2', text: 'Ship the first todo', done: false, createdAt: 2 },
-];
+const COMPOSER_HEIGHT = 46;
+// Space below the safe-area inset, above the NOIR LIST kicker.
+const HEADER_TOP_GAP = 12;
 
-export default function App() {
-  const [todos, setTodos] = useState<Todo[]>(SEED);
+function TodoScreen() {
+  const [todos, setTodos] = useState<Todo[] | null>(null);
   const [draft, setDraft] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const inputRef = useRef<TextInput>(null);
+  const didFocus = useRef(false);
+  const skipNextSave = useRef(true);
 
   const focusInput = () => {
     inputRef.current?.focus();
   };
 
   useEffect(() => {
-    focusInput();
+    let active = true;
+    loadTodos().then((loaded) => {
+      if (active) setTodos(loaded);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const remaining = todos.filter((t) => !t.done).length;
-  const doneCount = todos.length - remaining;
-  const progress = todos.length === 0 ? 0 : doneCount / todos.length;
+  useEffect(() => {
+    if (todos === null) return;
+    // The first value is the read we just finished. Writing it back would
+    // replace a failed or still-unread store with the seed list.
+    if (skipNextSave.current) {
+      skipNextSave.current = false;
+      return;
+    }
+    void saveTodos(todos);
+  }, [todos]);
+
+  useEffect(() => {
+    if (todos === null || didFocus.current) return;
+    didFocus.current = true;
+    focusInput();
+  }, [todos]);
+
+  const remaining = todos?.filter((t) => !t.done).length ?? 0;
+  const doneCount = (todos?.length ?? 0) - remaining;
+  const progress = todos === null || todos.length === 0 ? 0 : doneCount / todos.length;
 
   const visible = useMemo(() => {
+    if (todos === null) return [];
     if (filter === 'active') return todos.filter((t) => !t.done);
     if (filter === 'done') return todos.filter((t) => t.done);
     return todos;
@@ -49,25 +75,27 @@ export default function App() {
   const addTodo = () => {
     const text = draft.trim();
     if (!text) return;
-    setTodos((prev) => [
-      { id: Date.now().toString(), text, done: false, createdAt: Date.now() },
-      ...prev,
-    ]);
+    setTodos((prev) => {
+      if (prev === null) return prev;
+      return [{ id: Date.now().toString(), text, done: false, createdAt: Date.now() }, ...prev];
+    });
     setDraft('');
     requestAnimationFrame(focusInput);
   };
 
   const toggleTodo = (id: string) => {
-    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+    setTodos((prev) =>
+      prev === null ? prev : prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
+    );
   };
 
   const deleteTodo = (id: string) => {
-    setTodos((prev) => prev.filter((t) => t.id !== id));
+    setTodos((prev) => (prev === null ? prev : prev.filter((t) => t.id !== id)));
   };
 
   const clearDone = () => {
     if (doneCount === 0) return;
-    const run = () => setTodos((prev) => prev.filter((t) => !t.done));
+    const run = () => setTodos((prev) => (prev === null ? prev : prev.filter((t) => !t.done)));
     if (Platform.OS === 'web') {
       run();
       return;
@@ -77,6 +105,14 @@ export default function App() {
       { text: 'Clear', style: 'destructive', onPress: run },
     ]);
   };
+
+  if (todos === null) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <StatusBar style="light" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -109,6 +145,8 @@ export default function App() {
             placeholder="New task"
             placeholderTextColor={colors.textDim}
             style={styles.input}
+            textAlignVertical="center"
+            underlineColorAndroid="transparent"
             returnKeyType="done"
             blurOnSubmit={false}
             autoFocus
@@ -127,7 +165,12 @@ export default function App() {
         <View style={styles.toolbar}>
           <FilterBar value={filter} onChange={setFilter} />
           {doneCount > 0 ? (
-            <Pressable onPress={clearDone} style={styles.clearBtn}>
+            <Pressable
+              onPress={clearDone}
+              style={styles.clearBtn}
+              hitSlop={8}
+              accessibilityRole="button"
+            >
               <Text style={styles.clearLabel}>Clear done</Text>
             </Pressable>
           ) : null}
@@ -170,7 +213,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: HEADER_TOP_GAP,
     paddingBottom: spacing.sm,
   },
   kicker: {
@@ -205,6 +248,7 @@ const styles = StyleSheet.create({
   },
   composer: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
@@ -212,17 +256,25 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 52,
+    height: COMPOSER_HEIGHT,
+    minHeight: COMPOSER_HEIGHT,
+    maxHeight: COMPOSER_HEIGHT,
+    boxSizing: 'border-box',
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: 16,
+    paddingVertical: 0,
     color: colors.text,
     fontSize: 16,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   addBtn: {
-    height: 52,
+    height: COMPOSER_HEIGHT,
+    minHeight: COMPOSER_HEIGHT,
+    boxSizing: 'border-box',
     paddingHorizontal: 20,
     borderRadius: radius.md,
     backgroundColor: colors.accent,
@@ -255,7 +307,7 @@ const styles = StyleSheet.create({
   },
   clearLabel: {
     color: colors.accent,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   list: {
@@ -289,3 +341,11 @@ const styles = StyleSheet.create({
     maxWidth: 240,
   },
 });
+
+export default function App() {
+  return (
+    <SafeAreaProvider style={styles.flex}>
+      <TodoScreen />
+    </SafeAreaProvider>
+  );
+}
