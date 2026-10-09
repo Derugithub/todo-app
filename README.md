@@ -20,7 +20,7 @@ Tasks live in React state in `App.tsx` and are saved on device with AsyncStorage
 - Seed tasks are “Sketch the crimson layout” (done, id `1`) and “Ship the first todo” (open, id `2`).
 - The list is written after each change. Killing and reopening the app restores that list. Invalid saved entries are dropped. A non-empty save with nothing usable falls back to the seed tasks.
 - `Todo.createdAt` is stored on each task and is not shown in the UI.
-- Colors, spacing, and radius come from `src/theme.ts`. The screen background is `#070708`. The accent is `#E11D48`. The status bar is light. `SafeAreaView` from `react-native-safe-area-context` keeps the header below the safe-area inset, then adds 12dp above the “NOIR LIST” kicker. On iOS, `KeyboardAvoidingView` uses `padding` so the composer stays above the keyboard.
+- Colors, spacing, and radius come from `src/theme.ts`. The screen background is `#070708`. The accent is `#E11D48`. The status bar is light. `SafeAreaView` from `react-native-safe-area-context` keeps the header below the safe-area inset, then adds 12dp above the “NOIRLIST” kicker. On iOS, `KeyboardAvoidingView` uses `padding` so the composer stays above the keyboard.
 
 ## Requirements
 

@@ -19,7 +19,7 @@ import { colors, radius, spacing } from './src/theme';
 import type { Filter, Todo } from './src/types';
 
 const COMPOSER_HEIGHT = 46;
-// Space below the safe-area inset, above the NOIR LIST kicker.
+// Space below the safe-area inset, above the NOIRLIST kicker.
 const HEADER_TOP_GAP = 12;
 
 function TodoScreen() {
