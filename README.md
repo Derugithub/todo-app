@@ -8,13 +8,13 @@ Tasks live in React state in `App.tsx` and are saved on device with AsyncStorage
 
 ## Features
 
-- Add a task from the “New task” field. The Add button and the keyboard submit action use the same handler. Blank or whitespace-only text is ignored. New tasks are inserted at the top with `done: false`. The id and `createdAt` are `Date.now()`.
+- Add a task from the “New task” field. The Add button and the keyboard submit action use the same handler. Blank or whitespace-only text is ignored. New tasks are inserted at the top or the bottom. The circular T and B controls next to Done choose the edge: T is “Add to top” (the default) and B is “Add to bottom”. Choosing an edge does not reorder tasks already in the list. The id and `createdAt` are `Date.now()`, and `done` is false.
 - The field focuses on launch and again after a task is added.
 - Press a row to mark a task done or open. A done task shows a check mark, strikethrough text, and lower opacity. The label wraps to three lines.
 - Delete one task with the × control. Its accessibility label is “Delete task”.
 - Filter the list with All, Open (`active`), and Done.
 - The subtitle is “Nothing queued. Add a task.” when the list is empty, “All clear. Nice.” when every task is done, and otherwise `{open} open · {done} done`.
-- A progress bar shows finished tasks divided by the list length. The bar is empty when there are no tasks.
+- A progress bar shows finished tasks divided by the list length, with that percentage at the end of the bar (for example `50%`). The bar is empty and the label is `0%` when there are no tasks.
 - “Clear done” appears when at least one task is finished. On web it removes finished tasks immediately. On iOS and Android it shows “Clear finished?” with Cancel and Clear.
 - When the visible list is empty, the title is “Empty lane”. The copy is “Start with a single, sharp task.” on All, “No open tasks. Add one above.” on Open, and “No finished tasks yet.” on Done.
 - Seed tasks are “Sketch the crimson layout” (done, id `1`) and “Ship the first todo” (open, id `2`).
@@ -95,7 +95,7 @@ npx expo start
 Open the result with `npm run ios`, `npm run android`, or `npm run web`.
 
 1. The list starts with the two seed tasks.
-2. Type in “New task” and press Add, or submit from the keyboard. An empty field does nothing.
+2. Type in “New task” and press Add, or submit from the keyboard. An empty field does nothing. T (next to Done) inserts the task at the top. B inserts it at the bottom. The saved list keeps that order.
 3. Press a row to toggle done. Press × to delete that task.
 4. Use All, Open, or Done to filter the list.
 5. Press “Clear done” to remove finished tasks. On iOS and Android, confirm Clear. On web, finished tasks are removed without a dialog.

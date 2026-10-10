@@ -6,3 +6,6 @@ export type Todo = {
 };
 
 export type Filter = 'all' | 'active' | 'done';
+
+/** Where the next task is inserted. T is top, B is bottom. */
+export type InsertEdge = 'top' | 'bottom';
