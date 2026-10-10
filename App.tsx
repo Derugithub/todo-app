@@ -14,7 +14,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { FilterBar } from './src/components/FilterBar';
 import { TodoItem } from './src/components/TodoItem';
-import { loadTodos, saveTodos } from './src/todoStorage';
+import { loadInsertEdge, loadTodos, saveInsertEdge, saveTodos } from './src/todoStorage';
 import { colors, radius, spacing } from './src/theme';
 import type { Filter, InsertEdge, Todo } from './src/types';
 
@@ -29,10 +29,11 @@ function TodoScreen() {
   const [todos, setTodos] = useState<Todo[] | null>(null);
   const [draft, setDraft] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
-  const [insertAt, setInsertAt] = useState<InsertEdge>('top');
+  const [insertAt, setInsertAt] = useState<InsertEdge | null>(null);
   const inputRef = useRef<TextInput>(null);
   const didFocus = useRef(false);
   const skipNextSave = useRef(true);
+  const skipInsertSave = useRef(true);
 
   const focusInput = () => {
     inputRef.current?.focus();
@@ -40,8 +41,10 @@ function TodoScreen() {
 
   useEffect(() => {
     let active = true;
-    loadTodos().then((loaded) => {
-      if (active) setTodos(loaded);
+    Promise.all([loadTodos(), loadInsertEdge()]).then(([loaded, edge]) => {
+      if (!active) return;
+      setInsertAt(edge);
+      setTodos(loaded);
     });
     return () => {
       active = false;
@@ -60,6 +63,16 @@ function TodoScreen() {
   }, [todos]);
 
   useEffect(() => {
+    if (insertAt === null) return;
+    // Skip the value just loaded so a restart does not rewrite storage.
+    if (skipInsertSave.current) {
+      skipInsertSave.current = false;
+      return;
+    }
+    void saveInsertEdge(insertAt);
+  }, [insertAt]);
+
+  useEffect(() => {
     if (todos === null || didFocus.current) return;
     didFocus.current = true;
     focusInput();
@@ -69,6 +82,7 @@ function TodoScreen() {
   const doneCount = (todos?.length ?? 0) - remaining;
   const progress = todos === null || todos.length === 0 ? 0 : doneCount / todos.length;
   const progressPercent = Math.round(progress * 100);
+  const progressComplete = progressPercent === 100;
 
   const visible = useMemo(() => {
     if (todos === null) return [];
@@ -76,6 +90,10 @@ function TodoScreen() {
     if (filter === 'done') return todos.filter((t) => t.done);
     return todos;
   }, [filter, todos]);
+
+  const toggleInsertAt = () => {
+    setInsertAt((prev) => (prev === 'bottom' ? 'top' : 'bottom'));
+  };
 
   const addTodo = () => {
     const text = draft.trim();
@@ -113,7 +131,7 @@ function TodoScreen() {
     ]);
   };
 
-  if (todos === null) {
+  if (todos === null || insertAt === null) {
     return (
       <SafeAreaView style={styles.safe}>
         <StatusBar style="light" />
@@ -141,9 +159,17 @@ function TodoScreen() {
 
           <View style={styles.progressRow}>
             <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+              <View
+                style={[
+                  styles.progressFill,
+                  progressComplete && styles.progressFillComplete,
+                  { width: `${progressPercent}%` },
+                ]}
+              />
             </View>
-            <Text style={styles.progressLabel}>{progressPercent}%</Text>
+            <Text style={[styles.progressLabel, progressComplete && styles.progressLabelComplete]}>
+              {progressPercent}%
+            </Text>
           </View>
         </View>
 
@@ -177,7 +203,7 @@ function TodoScreen() {
             value={filter}
             onChange={setFilter}
             insertAt={insertAt}
-            onInsertAtChange={setInsertAt}
+            onToggleInsert={toggleInsertAt}
           />
           {doneCount > 0 ? (
             <Pressable
@@ -263,17 +289,23 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   progressLabel: {
-    color: colors.textMuted,
+    color: colors.accent,
     fontSize: 13,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
     minWidth: 40,
     textAlign: 'right',
   },
+  progressLabelComplete: {
+    color: colors.complete,
+  },
   progressFill: {
     height: '100%',
     backgroundColor: colors.accent,
     borderRadius: radius.pill,
+  },
+  progressFillComplete: {
+    backgroundColor: colors.complete,
   },
   composer: {
     flexDirection: 'row',

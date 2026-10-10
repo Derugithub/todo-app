@@ -4,23 +4,23 @@
 
 NoirList is a single-screen task list. `app.json` names the app NoirList, slug `todo-app`, version `1.0.0`. It is an Expo app. `package.json` depends on `expo` `~57.0.22`; `package-lock.json` resolves `expo` `57.0.27`. The interface is portrait and dark (`userInterfaceStyle` is `dark`). iOS `supportsTablet` is true. The Android package is `com.deredo.todoapp`. `npm run web` starts the Expo web target.
 
-Tasks live in React state in `App.tsx` and are saved on device with AsyncStorage (`@react-native-async-storage/async-storage` `2.2.0`, key `noir-list.todos.v1`). The screen opens with two seed tasks on first launch, or when the saved value is missing or unreadable. A saved empty list stays empty. Order and done state survive a restart. The source has no database server and no network client.
+Tasks live in React state in `App.tsx` and are saved on device with AsyncStorage (`@react-native-async-storage/async-storage` `2.2.0`, key `noir-list.todos.v1`). The top/bottom insert choice is saved beside that list under `noir-list.insert-edge.v1` (`top` or `bottom`; a missing value is top). The screen opens with two seed tasks on first launch, or when the saved value is missing or unreadable. A saved empty list stays empty. Order, done state, and the insert choice survive a restart. The source has no database server and no network client.
 
 ## Features
 
-- Add a task from the “New task” field. The Add button and the keyboard submit action use the same handler. Blank or whitespace-only text is ignored. New tasks are inserted at the top or the bottom. The circular T and B controls next to Done choose the edge: T is “Add to top” (the default) and B is “Add to bottom”. Choosing an edge does not reorder tasks already in the list. The id and `createdAt` are `Date.now()`, and `done` is false.
+- Add a task from the “New task” field. The Add button and the keyboard submit action use the same handler. Blank or whitespace-only text is ignored. New tasks are inserted at the top or the bottom. One circular control sits after the Done chip. It shows T (add on top, the default) or B (add at the bottom); a tap flips it and does not reorder tasks already in the list. Its accessibility label is “New tasks are added on top” or “New tasks are added at the bottom”. The id and `createdAt` are `Date.now()`, and `done` is false.
 - The field focuses on launch and again after a task is added.
 - Press a row to mark a task done or open. A done task shows a check mark, strikethrough text, and lower opacity. The label wraps to three lines.
 - Delete one task with the × control. Its accessibility label is “Delete task”.
 - Filter the list with All, Open (`active`), and Done.
 - The subtitle is “Nothing queued. Add a task.” when the list is empty, “All clear. Nice.” when every task is done, and otherwise `{open} open · {done} done`.
-- A progress bar shows finished tasks divided by the list length, with that percentage at the end of the bar (for example `50%`). The bar is empty and the label is `0%` when there are no tasks.
+- A progress bar shows finished tasks divided by the list length, with that percentage at the end of the bar (for example `50%`). The fill and the label use the crimson accent. At `100%` both turn green (`#22C55E`). The bar is empty and the label is `0%` when there are no tasks.
 - “Clear done” appears when at least one task is finished. On web it removes finished tasks immediately. On iOS and Android it shows “Clear finished?” with Cancel and Clear.
 - When the visible list is empty, the title is “Empty lane”. The copy is “Start with a single, sharp task.” on All, “No open tasks. Add one above.” on Open, and “No finished tasks yet.” on Done.
 - Seed tasks are “Sketch the crimson layout” (done, id `1`) and “Ship the first todo” (open, id `2`).
 - The list is written after each change. Killing and reopening the app restores that list. Invalid saved entries are dropped. A non-empty save with nothing usable falls back to the seed tasks.
 - `Todo.createdAt` is stored on each task and is not shown in the UI.
-- Colors, spacing, and radius come from `src/theme.ts`. The screen background is `#070708`. The accent is `#E11D48`. The status bar is light. `SafeAreaView` from `react-native-safe-area-context` keeps the header below the safe-area inset, then adds 12dp above the “NOIRLIST” kicker. On iOS, `KeyboardAvoidingView` uses `padding` so the composer stays above the keyboard.
+- Colors, spacing, and radius come from `src/theme.ts`. The screen background is `#070708`. The accent is `#E11D48`. Finished progress uses `#22C55E`. The status bar is light. `SafeAreaView` from `react-native-safe-area-context` keeps the header below the safe-area inset, then adds 12dp above the “NOIRLIST” kicker. On iOS, `KeyboardAvoidingView` uses `padding` so the composer stays above the keyboard.
 
 ## Requirements
 
@@ -95,7 +95,7 @@ npx expo start
 Open the result with `npm run ios`, `npm run android`, or `npm run web`.
 
 1. The list starts with the two seed tasks.
-2. Type in “New task” and press Add, or submit from the keyboard. An empty field does nothing. T (next to Done) inserts the task at the top. B inserts it at the bottom. The saved list keeps that order.
+2. Type in “New task” and press Add, or submit from the keyboard. An empty field does nothing. The circle after Done shows T or B. T inserts the task at the top. B inserts it at the bottom. A tap flips the letter. The saved list keeps that order, and the letter is restored on the next launch.
 3. Press a row to toggle done. Press × to delete that task.
 4. Use All, Open, or Done to filter the list.
 5. Press “Clear done” to remove finished tasks. On iOS and Android, confirm Clear. On web, finished tasks are removed without a dialog.

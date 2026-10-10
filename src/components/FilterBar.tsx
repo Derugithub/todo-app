@@ -8,19 +8,15 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'done', label: 'Done' },
 ];
 
-const INSERT_EDGES: { edge: InsertEdge; label: string; accessibilityLabel: string }[] = [
-  { edge: 'top', label: 'T', accessibilityLabel: 'Add to top' },
-  { edge: 'bottom', label: 'B', accessibilityLabel: 'Add to bottom' },
-];
-
 type Props = {
   value: Filter;
   onChange: (filter: Filter) => void;
   insertAt: InsertEdge;
-  onInsertAtChange: (edge: InsertEdge) => void;
+  onToggleInsert: () => void;
 };
 
-export function FilterBar({ value, onChange, insertAt, onInsertAtChange }: Props) {
+export function FilterBar({ value, onChange, insertAt, onToggleInsert }: Props) {
+  const addingOnTop = insertAt === 'top';
   return (
     <View style={styles.row}>
       {FILTERS.map((item) => {
@@ -35,25 +31,15 @@ export function FilterBar({ value, onChange, insertAt, onInsertAtChange }: Props
           </Pressable>
         );
       })}
-      <View style={styles.insertPair}>
-        {INSERT_EDGES.map((item) => {
-          const selected = item.edge === insertAt;
-          return (
-            <Pressable
-              key={item.edge}
-              onPress={() => onInsertAtChange(item.edge)}
-              accessibilityRole="button"
-              accessibilityLabel={item.accessibilityLabel}
-              accessibilityState={{ selected }}
-              aria-selected={selected}
-              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
-              style={[styles.insertBtn, selected && styles.insertBtnOn]}
-            >
-              <Text style={[styles.insertLabel, selected && styles.insertLabelOn]}>{item.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <Pressable
+        onPress={onToggleInsert}
+        accessibilityRole="button"
+        accessibilityLabel={addingOnTop ? 'New tasks are added on top' : 'New tasks are added at the bottom'}
+        hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+        style={styles.insertBtn}
+      >
+        <Text style={styles.insertLabel}>{addingOnTop ? 'T' : 'B'}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -67,32 +53,18 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     flexShrink: 0,
   },
-  insertPair: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
   insertBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.bgElevated,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  insertBtnOn: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-  },
   insertLabel: {
-    color: colors.textMuted,
+    color: colors.text,
     fontSize: 13,
     fontWeight: '800',
-  },
-  insertLabelOn: {
-    color: colors.text,
   },
   chip: {
     paddingHorizontal: 16,
