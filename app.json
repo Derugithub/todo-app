@@ -8,7 +8,7 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.deredo.todoapp"
+      "bundleIdentifier": "com.deredo.NoirList"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.deredo.todoapp"
+      "package": "com.deredo.NoirList"
     },
     "web": {
       "favicon": "./assets/favicon.png"
