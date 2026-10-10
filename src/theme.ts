@@ -7,6 +7,7 @@ export const colors = {
   accentSoft: 'rgba(225, 29, 72, 0.16)',
   accentGlow: 'rgba(225, 29, 72, 0.45)',
   accentMuted: '#BE123C',
+  complete: '#22C55E',
   text: '#F5F5F7',
   textMuted: '#8A8A96',
   textDim: '#5C5C66',

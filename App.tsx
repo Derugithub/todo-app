@@ -14,21 +14,26 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { FilterBar } from './src/components/FilterBar';
 import { TodoItem } from './src/components/TodoItem';
-import { loadTodos, saveTodos } from './src/todoStorage';
+import { loadInsertEdge, loadTodos, saveInsertEdge, saveTodos } from './src/todoStorage';
 import { colors, radius, spacing } from './src/theme';
-import type { Filter, Todo } from './src/types';
+import type { Filter, InsertEdge, Todo } from './src/types';
 
 const COMPOSER_HEIGHT = 46;
 // Space below the safe-area inset, above the NOIRLIST kicker.
 const HEADER_TOP_GAP = 12;
+// The header no longer pads under the bar. 8dp here is the gap above the field
+// (was spacing.lg, 24, plus spacing.sm, 10, under the bar).
+const COMPOSER_TOP_GAP = 8;
 
 function TodoScreen() {
   const [todos, setTodos] = useState<Todo[] | null>(null);
   const [draft, setDraft] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
+  const [insertAt, setInsertAt] = useState<InsertEdge | null>(null);
   const inputRef = useRef<TextInput>(null);
   const didFocus = useRef(false);
   const skipNextSave = useRef(true);
+  const skipInsertSave = useRef(true);
 
   const focusInput = () => {
     inputRef.current?.focus();
@@ -36,8 +41,10 @@ function TodoScreen() {
 
   useEffect(() => {
     let active = true;
-    loadTodos().then((loaded) => {
-      if (active) setTodos(loaded);
+    Promise.all([loadTodos(), loadInsertEdge()]).then(([loaded, edge]) => {
+      if (!active) return;
+      setInsertAt(edge);
+      setTodos(loaded);
     });
     return () => {
       active = false;
@@ -56,6 +63,16 @@ function TodoScreen() {
   }, [todos]);
 
   useEffect(() => {
+    if (insertAt === null) return;
+    // Skip the value just loaded so a restart does not rewrite storage.
+    if (skipInsertSave.current) {
+      skipInsertSave.current = false;
+      return;
+    }
+    void saveInsertEdge(insertAt);
+  }, [insertAt]);
+
+  useEffect(() => {
     if (todos === null || didFocus.current) return;
     didFocus.current = true;
     focusInput();
@@ -64,6 +81,8 @@ function TodoScreen() {
   const remaining = todos?.filter((t) => !t.done).length ?? 0;
   const doneCount = (todos?.length ?? 0) - remaining;
   const progress = todos === null || todos.length === 0 ? 0 : doneCount / todos.length;
+  const progressPercent = Math.round(progress * 100);
+  const progressComplete = progressPercent === 100;
 
   const visible = useMemo(() => {
     if (todos === null) return [];
@@ -72,12 +91,18 @@ function TodoScreen() {
     return todos;
   }, [filter, todos]);
 
+  const toggleInsertAt = () => {
+    setInsertAt((prev) => (prev === 'bottom' ? 'top' : 'bottom'));
+  };
+
   const addTodo = () => {
     const text = draft.trim();
     if (!text) return;
     setTodos((prev) => {
       if (prev === null) return prev;
-      return [{ id: Date.now().toString(), text, done: false, createdAt: Date.now() }, ...prev];
+      const todo: Todo = { id: Date.now().toString(), text, done: false, createdAt: Date.now() };
+      // Array order is what AsyncStorage writes, so top vs bottom survives a restart.
+      return insertAt === 'bottom' ? [...prev, todo] : [todo, ...prev];
     });
     setDraft('');
     requestAnimationFrame(focusInput);
@@ -106,7 +131,7 @@ function TodoScreen() {
     ]);
   };
 
-  if (todos === null) {
+  if (todos === null || insertAt === null) {
     return (
       <SafeAreaView style={styles.safe}>
         <StatusBar style="light" />
@@ -132,8 +157,19 @@ function TodoScreen() {
               : `${remaining} open · ${doneCount} done`}
           </Text>
 
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
+          <View style={styles.progressRow}>
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  progressComplete && styles.progressFillComplete,
+                  { width: `${progressPercent}%` },
+                ]}
+              />
+            </View>
+            <Text style={[styles.progressLabel, progressComplete && styles.progressLabelComplete]}>
+              {progressPercent}%
+            </Text>
           </View>
         </View>
 
@@ -163,7 +199,12 @@ function TodoScreen() {
         </View>
 
         <View style={styles.toolbar}>
-          <FilterBar value={filter} onChange={setFilter} />
+          <FilterBar
+            value={filter}
+            onChange={setFilter}
+            insertAt={insertAt}
+            onToggleInsert={toggleInsertAt}
+          />
           {doneCount > 0 ? (
             <Pressable
               onPress={clearDone}
@@ -214,7 +255,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.lg,
     paddingTop: HEADER_TOP_GAP,
-    paddingBottom: spacing.sm,
+    paddingBottom: 0,
   },
   kicker: {
     color: colors.accent,
@@ -235,23 +276,43 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 18,
   },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   progressTrack: {
+    flex: 1,
     height: 4,
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
     overflow: 'hidden',
+  },
+  progressLabel: {
+    color: colors.accent,
+    fontSize: 13,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    minWidth: 40,
+    textAlign: 'right',
+  },
+  progressLabelComplete: {
+    color: colors.complete,
   },
   progressFill: {
     height: '100%',
     backgroundColor: colors.accent,
     borderRadius: radius.pill,
   },
+  progressFillComplete: {
+    backgroundColor: colors.complete,
+  },
   composer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: COMPOSER_TOP_GAP,
     paddingBottom: spacing.sm,
   },
   input: {
@@ -298,10 +359,14 @@ const styles = StyleSheet.create({
   toolbar: {
     paddingHorizontal: spacing.lg,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    columnGap: 8,
   },
   clearBtn: {
+    marginLeft: 'auto',
+    marginBottom: 8,
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
