@@ -2,7 +2,7 @@
 
 ## Overview
 
-NoirList is a single-screen task list. `app.json` names the app NoirList, slug `todo-app`, version `1.0.0`. It is an Expo app. `package.json` depends on `expo` `~57.0.22`; `package-lock.json` resolves `expo` `57.0.27`. The interface is portrait and dark (`userInterfaceStyle` is `dark`). iOS `supportsTablet` is true. The Android package is `com.deredo.todoapp`. `npm run web` starts the Expo web target.
+NoirList is a single-screen task list. `app.json` names the app NoirList, slug `todo-app`, version `1.0.0`. It is an Expo app. `package.json` depends on `expo` `~57.0.22`; `package-lock.json` resolves `expo` `57.0.27`. The interface is portrait and dark (`userInterfaceStyle` is `dark`). iOS `supportsTablet` is true and the iOS bundle identifier is `com.deredo.todoapp`. The Android package is `com.deredo.todoapp`. `npm run web` starts the Expo web target.
 
 Tasks live in React state in `App.tsx` and are saved on device with AsyncStorage (`@react-native-async-storage/async-storage` `2.2.0`, key `noir-list.todos.v1`). The top/bottom insert choice is saved beside that list under `noir-list.insert-edge.v1` (`top` or `bottom`; a missing value is top). The screen opens with two seed tasks on first launch, or when the saved value is missing or unreadable. A saved empty list stays empty. Order, done state, and the insert choice survive a restart. The source has no database server and no network client.
 
@@ -61,7 +61,7 @@ Settings in `app.json`:
 - Name `NoirList`, slug `todo-app`, version `1.0.0`.
 - Orientation `portrait`. `userInterfaceStyle` `dark`.
 - Icon `./assets/icon.png`. Web favicon `./assets/favicon.png`.
-- iOS `supportsTablet` is true. [TODO: an iOS bundle identifier is not set.]
+- iOS `supportsTablet` is true. The iOS bundle identifier is `com.deredo.todoapp`.
 - Android package `com.deredo.todoapp`. `predictiveBackGestureEnabled` is false.
 - Android adaptive icon foreground `./assets/android-icon-foreground.png`, background image `./assets/android-icon-background.png`, monochrome image `./assets/android-icon-monochrome.png`, and `backgroundColor` `#FFFFFF`.
 - `extra.eas.projectId` is `7d992577-6e53-40bf-b5bc-e329989817d8`.
